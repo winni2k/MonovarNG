@@ -16,6 +16,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <array>
 
 using namespace std;
 
@@ -100,4 +101,30 @@ vector<Pileup> utility::getPileup(int numCells, string filename) {
 //    cout << to_string(rows.size()) << " rows read." << endl;
     
     return rows;
-} 
+}
+
+array<array<array<double, 4>, 4>, 4> utility::genPriorMatrix(double p) {
+    // Generates priors matrix given probability p. priors[a][b][c] = p(^ab)(_c)
+    array<array<array<double, 4>, 4>, 4> priors;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                if (i == j) {
+                    if (i == k) { // AA A, CC C...
+                        priors[i][j][k] = 1 - 3*p;
+                    } else { // AA C, AA T...
+                        priors[i][j][k] = p;
+                    }
+                } else {
+                    if (i == k || j == k) { // AC A, AC C...
+                        priors[i][j][k] = (1-2*p)/2;
+                    } else { // AC T, ACG...
+                        priors[i][j][k] = p;
+                    }
+                }
+            }
+        }
+    }
+    return priors;
+}
+

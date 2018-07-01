@@ -8,9 +8,14 @@
 
 #include "app.hpp"
 #include "vcf.hpp"
+#include "utility.hpp"
 
 #include <cstdio>
 #include <iostream>
+#include <array>
+
+using namespace std;
+using namespace utility;
 
 App::App(Config config, vector<string> bamIDs, vector<Pileup> pileupRows) : mutationThreshold(config.mutationThreshold), pFalsePositive(config.pFalsePositive), pDropout(config.pDropout), numThreads(config.numThreads), useConsensusFilter(config.useConsensusFilter), positions(pileupRows) {
     
@@ -31,9 +36,9 @@ void App::runAlgo() {
         
         int altCount = totalDepth - refDepth; // no. of alternate reads
         
-        long double altFreq;
+        double altFreq;
         if (totalDepth == 0) altFreq = 0;
-        else altFreq = (long double) altCount / totalDepth;
+        else altFreq = (double) altCount / totalDepth;
         
         // Prefilter
         int prefilter = 0;
@@ -47,15 +52,22 @@ void App::runAlgo() {
             continue;
         }
         
-        // Count stuff idk
-        int readSupportCount = 0;
+        // Parse and filter reads
+        position.sanitizeBases();
+        position.filterCellsWithRead();
+        position.computeQualities();
         
+        // Find and set alternate base at positon. If alt base cannot be set, return
+        if (!position.setAltBase()) continue;
         
+        // Convert all bases to integers to speedup computation
+        position.convertBasesToInt(); 
         
-        
-        
-        
-        
+        // Generate prior matrix
+        array<array<array<double, 4>, 4>, 4> priors;
+        if (position.cellsWithRead() > (numCells/2)-1 && position.cellsWithAlt() == 1) priors = genPriorMatrix(0.2);
+        else if (position.cellsWithRead() > (numCells/2) && position.cellsWithAlt() == 2 && position.totalDepth() > 30 && altFreq < 0.1) priors = genPriorMatrix(0.1);
+        else priors = genPriorMatrix(pFalsePositive);
         
         
         
