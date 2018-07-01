@@ -57,17 +57,25 @@ void App::runAlgo() {
         position.filterCellsWithRead();
         position.computeQualities();
         
+        // Another filtration, in case all reads are erased
+        if (!position.cellsWithRead()) continue;
+        
         // Find and set alternate base at positon. If alt base cannot be set, return
         if (!position.setAltBase()) continue;
         
         // Convert all bases to integers to speedup computation
         position.convertBasesToInt(); 
         
-        // Generate prior matrix
-        array<array<array<double, 4>, 4>, 4> priors;
-        if (position.cellsWithRead() > (numCells/2)-1 && position.cellsWithAlt() == 1) priors = genPriorMatrix(0.2);
-        else if (position.cellsWithRead() > (numCells/2) && position.cellsWithAlt() == 2 && position.totalDepth() > 30 && altFreq < 0.1) priors = genPriorMatrix(0.1);
-        else priors = genPriorMatrix(pFalsePositive);
+        // Generate genotype priors
+        array<array<array<double, 4>, 4>, 4> genotypePriors; // probability of read given genotype e.g. P(^AA)(_C)
+        if (position.cellsWithRead() > (numCells/2)-1 && position.cellsWithAlt() == 1) genotypePriors = genGenotypePriors(0.2);
+        else if (position.cellsWithRead() > (numCells/2) && position.cellsWithAlt() == 2 && position.totalDepth() > 30 && altFreq < 0.1) genotypePriors = genGenotypePriors(0.1);
+        else genotypePriors = genGenotypePriors(pFalsePositive);
+        
+        // Compute probability of zero mutations given data
+        double zeroVarProb = position.computeZeroVarProb(genotypePriors);
+        printf("%lf\n", zeroVarProb);
+        
         
         
         

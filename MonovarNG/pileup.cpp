@@ -6,6 +6,7 @@
 //  Copyright © 2018 tianyi. All rights reserved.
 //
 
+#include "utility.hpp"
 #include "pileup.hpp"
 #include "single_cell_pos.hpp"
 
@@ -17,6 +18,7 @@
 #include <array>
 
 using namespace std;
+using namespace utility;
 
 Pileup::Pileup(int numCells, string row) : numCells(numCells) {
     boost::trim(row);
@@ -140,3 +142,15 @@ void Pileup::convertBasesToInt() {
     
     for (auto &cell: cells) cell.convertBasesToInt();
 }
+
+
+double Pileup::computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors) {
+    // Computes the probability of zero mutations given data
+    this->genotypePriors = genotypePriors;
+    // Generate variant number prior array
+    vector<double> altCountPriors = genAltCountPriors(cellsWithRead());
+    
+    
+    return 0.0;
+}
+

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <array>
 
 using namespace std;
 
@@ -26,6 +27,10 @@ struct Pileup {
     char altBase; // alternate base at position
     vector<SingleCellPos> cells; // data for individual cell reads
     vector<SingleCellPos> allCells; // data for all cells, an archived version of cells
+    
+    array<array<array<double, 4>, 4>, 4> genotypePriors; // probability of read given genotype e.g. P(^AA)(_C)
+    vector<double> altCountPriors; // alternate allele count priors, for the given number of cells with reads
+    
     
     Pileup(int numCells, string row);
     
@@ -47,7 +52,7 @@ struct Pileup {
     void convertBasesToInt(); // Converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure. Acts on cells and refbase/altbase
 
     
-    
+    double computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors); // Computes the probability of zero mutations given data
 
 };
 

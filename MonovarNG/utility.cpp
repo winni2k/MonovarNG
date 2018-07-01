@@ -103,8 +103,8 @@ vector<Pileup> utility::getPileup(int numCells, string filename) {
     return rows;
 }
 
-array<array<array<double, 4>, 4>, 4> utility::genPriorMatrix(double p) {
-    // Generates priors matrix given probability p. priors[a][b][c] = p(^ab)(_c)
+array<array<array<double, 4>, 4>, 4> utility::genGenotypePriors(double p) {
+    // Generates genotype priors matrix given probability p. priors[a][b][c] = p(^ab)(_c)
     array<array<array<double, 4>, 4>, 4> priors;
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -125,6 +125,23 @@ array<array<array<double, 4>, 4>, 4> utility::genPriorMatrix(double p) {
             }
         }
     }
+    return priors;
+}
+
+vector<double> utility::genAltCountPriors(int numCells, double mutationRate) {
+    // gets the alternate allele count priors, for the given number of cells with reads. Return array size = 2*numCells+1
+    vector<double> priors; 
+    for (int l = 0; l <= 2*numCells; l++) {
+        double prob = 0;
+        for (int i = 1; i <= 2*numCells-1; i++) {
+            prob += double(1)/i;
+        }
+        prob = (1-mutationRate*prob)/2;
+        
+        if (l == 0 || l == 2*numCells) priors.push_back(prob);
+        else priors.push_back(mutationRate/l);
+    }
+    
     return priors;
 }
 
