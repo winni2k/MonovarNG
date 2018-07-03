@@ -16,6 +16,7 @@
 #include <vector>
 #include <iostream>
 #include <array>
+#include <cmath>
 
 using namespace std;
 using namespace utility;
@@ -143,13 +144,49 @@ void Pileup::convertBasesToInt() {
     for (auto &cell: cells) cell.convertBasesToInt();
 }
 
+vector<array<double, 3>> Pileup::computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout) {
+    // computes likelihoods L(g=0, 1, 2) for each cell
+    vector<array<double, 3>> likelihoods;
+    for (auto &cell: cells) {
+        // g = 0
+        double g0 = 1.0;
+        for (int i = 0; i < cell.numReads; i++) {
+            double probRead = genotypePriors[refBase][refBase][cell.bases[i]]; // likelihood of read given both refbase
+            g0 *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead; 
+        }
+        
+        // g = 2
+        double g2 = 1.0;
+        for (int i = 0; i < cell.numReads; i++) {
+            double probRead = genotypePriors[altBase][altBase][cell.bases[i]]; // likelihood of read given both altbase
+            g2 *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead; 
+        }
+        
+        // g = 1
+        double g1 = 0, probADO = 1.0, probNoADO = (g0+g2)/2;
+        for (int i = 0; i < cell.numReads; i++) {
+            double probRead = genotypePriors[refBase][altBase][cell.bases[i]]; // likelihood of read given refbase & altbase
+            probADO *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead; 
+        }
+        g1 = pDropout * probADO + (1-pDropout) * probNoADO;
+        
+        printf("%d %d ", refBase, altBase);
+        for (char c: cell.bases) {
+            printf("%d", c);
+        }
+        printf(" %lf %lf %lf\n", log10(g0), log10(g1), log10(g2));
+        likelihoods.push_back(array<double, 3>{g0, g1, g2});
+    }
+    
+    return likelihoods;
+}
 
-double Pileup::computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors) {
-    // Computes the probability of zero mutations given data
-    this->genotypePriors = genotypePriors;
+
+double Pileup::computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout) {
     // Generate variant number prior array
     vector<double> altCountPriors = genAltCountPriors(cellsWithRead());
-    
+    // Generate likelihoods L(g=0, 1, 2) for each cell
+    vector<array<double, 3>> likelihoods = computeLikelihoods(genotypePriors, pDropout);
     
     return 0.0;
 }

@@ -20,20 +20,20 @@ using namespace utility;
 
 
 int main(int argc, const char * argv[]) {
-//    test();
-    
-    
-    Config config = setupConfig(argc, argv);
-    
-    vector<string> bamIDs = getBamIDs(config.bamfileNames);
-    
-    int numCells = bamIDs.size();
-    
-    vector<Pileup> pileup = getPileup(numCells, config.pileupFilename);
-    
-    App app(config, bamIDs, pileup);
-    
-    app.runAlgo();
+    test();
+//    
+//    
+//    Config config = setupConfig(argc, argv);
+//    
+//    vector<string> bamIDs = getBamIDs(config.bamfileNames);
+//    
+//    int numCells = bamIDs.size();
+//    
+//    vector<Pileup> pileup = getPileup(numCells, config.pileupFilename);
+//    
+//    App app(config, bamIDs, pileup);
+//    
+//    app.runAlgo();
     
     return 0;
 }

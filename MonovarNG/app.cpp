@@ -73,7 +73,7 @@ void App::runAlgo() {
         else genotypePriors = genGenotypePriors(pFalsePositive);
         
         // Compute probability of zero mutations given data
-        double zeroVarProb = position.computeZeroVarProb(genotypePriors);
+        double zeroVarProb = position.computeZeroVarProb(genotypePriors, pDropout);
         printf("%lf\n", zeroVarProb);
         
         

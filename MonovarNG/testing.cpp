@@ -9,6 +9,7 @@
 #include "testing.hpp"
 #include "single_cell_pos.hpp"
 #include "utility.hpp"
+#include "wrdouble.hpp"
 
 #include <iostream>
 #include <array>
@@ -45,4 +46,10 @@ void test() {
 //            printf("\n");
 //        }
 //    }
+    
+//    wrdouble a = 1e-100;
+//    a *= 3e50;
+    cout << a;
+    
+    
 }

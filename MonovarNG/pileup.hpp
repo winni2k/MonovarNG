@@ -28,10 +28,6 @@ struct Pileup {
     vector<SingleCellPos> cells; // data for individual cell reads
     vector<SingleCellPos> allCells; // data for all cells, an archived version of cells
     
-    array<array<array<double, 4>, 4>, 4> genotypePriors; // probability of read given genotype e.g. P(^AA)(_C)
-    vector<double> altCountPriors; // alternate allele count priors, for the given number of cells with reads
-    
-    
     Pileup(int numCells, string row);
     
     void print(string filename = ""); // prints bases and qualities for debugging, and appends to file if specified
@@ -42,17 +38,18 @@ struct Pileup {
     int cellsWithRead(); // gets number of cells with reads
     int cellsWithAlt(); // gets number of cells with alternate alleles
     
-    void sanitizeBases(); // Removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper
-    void computeQualities(); // Converts the quality score string into decimal scores
+    void sanitizeBases(); // removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper
+    void computeQualities(); // converts the quality score string into decimal scores
     void filterCellsWithRead(); // archives cells to allCells, and filters cells for only those with reads
     
     array<int, 4> baseFreq(); // gets frequencies of each base - A, C, T, G
     bool setAltBase(); // sets the alternate base for position
     
-    void convertBasesToInt(); // Converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure. Acts on cells and refbase/altbase
+    void convertBasesToInt(); // converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure. Acts on cells and refbase/altbase
 
     
-    double computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors); // Computes the probability of zero mutations given data
+    vector<array<double, 3>> computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
+    double computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes the probability of zero mutations given data
 
 };
 
