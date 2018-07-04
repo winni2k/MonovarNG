@@ -28,15 +28,19 @@ struct wrdouble {
     wrdouble(double n); // constructor from double
     
     operator double(); // casting to double
+    operator string(); // casting to string
     
     friend ostream& operator<<(ostream& out, wrdouble& n) {
-        out << double(n); 
+        out << string(n); 
         return out;
     }
     
     wrdouble& operator=(double n); // assignment of double
     wrdouble& operator=(const wrdouble& n); // assignment of wrdouble
-        
+    
+    bool operator<(wrdouble& n); // comparator <
+    bool operator>(wrdouble& n); // comparator >
+    
     wrdouble operator*(const wrdouble& n); // multiplication
     wrdouble operator/(const wrdouble& n); // division
     wrdouble operator+(const wrdouble& n); // addition

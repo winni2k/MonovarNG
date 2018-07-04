@@ -49,7 +49,12 @@ void test() {
     
 //    wrdouble a = 1e-100;
 //    a *= 3e50;
-    cout << a;
+//    cout << a;
     
+    wrdouble a = 1;
+    for (int i = 0; i < 1100; i++) {
+        a *= 0.4;
+        cout << i << " - " << a << endl;
+    }
     
 }

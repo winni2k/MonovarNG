@@ -17,6 +17,11 @@ wrdouble::wrdouble(double value, int exponent): value(value), exponent(exponent)
 
 wrdouble::wrdouble(double n) {
     // constructor from double
+    if (n == 0) { // if zero
+        value = 0;
+        exponent = -1e9; // this number is very small!
+        return;
+    }
     exponent = 0;
     value = n;
     while (value < 1) { // if n < 1
@@ -31,12 +36,20 @@ wrdouble::wrdouble(double n) {
 
 
 wrdouble::operator double() {
+    // casting to double
     double n = value;
     n *= pow(base, exponent);
-    if (isinf(n)) return 0; // if underflow 
+    if (isinf(n) || isnan(n)) return 0; // if underflow 
     return n;
 }
 
+wrdouble::operator string() {
+    // casting to string
+    double logged = log10(value) + log10(2) * 64 * exponent;
+    double val = pow(double(10), logged-int(logged)+1);
+    int exp = logged-1;
+    return to_string(val) + "e" + to_string(exp);
+}
 
 wrdouble& wrdouble::operator=(double n) {
     // assignment of double
@@ -59,6 +72,21 @@ wrdouble& wrdouble::operator=(const wrdouble& n) {
     value = n.value;
     exponent = n.exponent;
     return *this;
+}
+
+
+bool wrdouble::operator<(wrdouble& n) {
+    // comparator <
+    if (exponent < n.exponent) return true;
+    else if (exponent > n.exponent) return false;
+    else return value < n.value;
+}
+
+bool wrdouble::operator>(wrdouble& n) {
+    // comparator >
+    if (exponent > n.exponent) return true;
+    else if (exponent < n.exponent) return false;
+    else return value > n.value;
 }
 
 

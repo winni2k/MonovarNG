@@ -78,10 +78,14 @@ void SingleCellPos::removeInsDels() {
 
 void SingleCellPos::removeStartEnd() {
     // removes all start and end read symbols
+    // note that a ^ is followed by another character denoting quality
     string newBases = "";
-    for (char c: bases) {
+    for (int i = 0; i < bases.size(); i++) {
+        char c = bases[i];
         if (c != '$' && c != '^') {
             newBases += c;
+        } else if (c == '^') {
+            i++; // skip one more character
         }
     }
     bases = newBases;

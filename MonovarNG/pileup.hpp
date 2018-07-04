@@ -10,6 +10,7 @@
 #define pileup_hpp
 
 #include "single_cell_pos.hpp"
+#include "wrdouble.hpp"
 
 #include <stdio.h>
 #include <string>
@@ -48,7 +49,7 @@ struct Pileup {
     void convertBasesToInt(); // converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure. Acts on cells and refbase/altbase
 
     
-    vector<array<double, 3>> computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
+    vector<array<wrdouble, 3>> computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
     double computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes the probability of zero mutations given data
 
 };
