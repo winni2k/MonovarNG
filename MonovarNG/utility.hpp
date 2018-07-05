@@ -11,6 +11,7 @@
 
 #include "config.hpp"
 #include "pileup.hpp"
+#include "wrdouble.hpp"
 
 #include <stdio.h>
 #include <array>

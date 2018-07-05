@@ -12,10 +12,13 @@
 #include "config.hpp"
 #include "vcf.hpp"
 #include "pileup.hpp"
+#include "utility.hpp"
+#include "combination.hpp"
 
 #include <stdio.h>
 
 using namespace std;
+using namespace utility;
 
 class App {
     // Main application, controls the algorithm flow
@@ -28,10 +31,12 @@ class App {
     
     bool useConsensusFilter; // whether to use Consensus Filter (CF) 
     
-    int numCells; // Number of cells processed
-    int numPos; // Number of positions being processed
+    int numCells; // number of cells processed
+    int numPos; // number of positions being processed
     
     VCFDocument output;
+    
+    Combination combi; // computes nCr
     
     vector<Pileup> positions;
     

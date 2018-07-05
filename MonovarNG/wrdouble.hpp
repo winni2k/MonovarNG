@@ -24,16 +24,14 @@ struct wrdouble {
     double value; // 1 <= value < base
     int exponent;
     
+    wrdouble(); // default constructor
     wrdouble(double value, int exponent); // constructor given value and exp
     wrdouble(double n); // constructor from double
     
     operator double(); // casting to double
-    operator string(); // casting to string
+    operator string() const; // casting to string
     
-    friend ostream& operator<<(ostream& out, wrdouble& n) {
-        out << string(n); 
-        return out;
-    }
+    friend ostream& operator<<(ostream& out, const wrdouble& n); // printing conversion
     
     wrdouble& operator=(double n); // assignment of double
     wrdouble& operator=(const wrdouble& n); // assignment of wrdouble
@@ -41,13 +39,13 @@ struct wrdouble {
     bool operator<(wrdouble& n); // comparator <
     bool operator>(wrdouble& n); // comparator >
     
-    wrdouble operator*(const wrdouble& n); // multiplication
-    wrdouble operator/(const wrdouble& n); // division
-    wrdouble operator+(const wrdouble& n); // addition
+    wrdouble operator*(const wrdouble& n) const; // multiplication
+    wrdouble operator/(const wrdouble& n) const; // division
+    wrdouble operator+(const wrdouble& n) const; // addition
     
-    wrdouble operator*(double n); // multiplication with double
-    wrdouble operator/(double n); // division with double
-    wrdouble operator+(double n); // addition with double
+    wrdouble operator*(double n) const; // multiplication with double
+    wrdouble operator/(double n) const; // division with double
+    wrdouble operator+(double n) const; // addition with double
     
     wrdouble& operator*=(const wrdouble& n); // multiplication and assignment
     wrdouble& operator/=(const wrdouble& n); // division and assignment

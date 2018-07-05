@@ -8,6 +8,7 @@
 
 #include "utility.hpp"
 #include "pileup.hpp"
+#include "wrdouble.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <htslib/sam.h>

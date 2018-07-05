@@ -11,6 +11,7 @@
 
 #include "single_cell_pos.hpp"
 #include "wrdouble.hpp"
+#include "combination.hpp"
 
 #include <stdio.h>
 #include <string>
@@ -18,6 +19,8 @@
 #include <array>
 
 using namespace std;
+
+//class Combination; // forward definition of combination object
 
 struct Pileup {
     // Stores data in a row in pileup format
@@ -29,9 +32,13 @@ struct Pileup {
     vector<SingleCellPos> cells; // data for individual cell reads
     vector<SingleCellPos> allCells; // data for all cells, an archived version of cells
     
+    const Combination* combi; // computes nCr, as a row of nC0...nCn
+    
     Pileup(int numCells, string row);
     
     void print(string filename = ""); // prints bases and qualities for debugging, and appends to file if specified
+    
+    void setCombi(const Combination* combiPtr); // sets combi
     
     int totalDepth(); // gets total depth (no. of reads)
     int refDepth(); // gets number of reads matching reference base
@@ -49,8 +56,10 @@ struct Pileup {
     void convertBasesToInt(); // converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure. Acts on cells and refbase/altbase
 
     
-    vector<array<wrdouble, 3>> computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
-    double computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout); // computes the probability of zero mutations given data
+    vector<array<wrdouble, 3>> computeLikelihoods(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
+    vector<wrdouble> computeDP(const vector<array<wrdouble, 3>>& likelihoods); // computes dp for h_j,l and returns the row for j = numCells
+    vector<wrdouble> computeAltLikelihoods(const vector<wrdouble>& dp); // computes alt count likelihoods, dividing each element i by 2*numCells C i
+    double computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes the probability of zero mutations given data
 
 };
 

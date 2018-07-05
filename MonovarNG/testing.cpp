@@ -51,10 +51,10 @@ void test() {
 //    a *= 3e50;
 //    cout << a;
     
-    wrdouble a = 1;
-    for (int i = 0; i < 1100; i++) {
-        a *= 0.4;
-        cout << i << " - " << a << endl;
-    }
+    wrdouble a = 0;
+    wrdouble b = wrdouble(1.1, -50);
+    cout << b << endl;
+    cout << a+b << endl;
+    cout << wrdouble(0) + b << endl;
     
 }

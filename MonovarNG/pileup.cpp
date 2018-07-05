@@ -48,6 +48,12 @@ void Pileup::print(string filename) {
 }
 
 
+void Pileup::setCombi(const Combination* combiPtr) {
+    // sets combi
+    combi = combiPtr;
+}
+
+
 int Pileup::totalDepth() {
     int count = 0;
     for (SingleCellPos cell: cells) {
@@ -90,6 +96,7 @@ void Pileup::filterCellsWithRead() {
     for (auto cell: allCells) {
         if (cell.hasReads()) cells.push_back(cell);
     }
+    numCells = cells.size(); // set numcells to be the number of cells with read
 }
 
 
@@ -146,7 +153,7 @@ void Pileup::convertBasesToInt() {
     for (auto &cell: cells) cell.convertBasesToInt();
 }
 
-vector<array<wrdouble, 3>> Pileup::computeLikelihoods(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout) {
+vector<array<wrdouble, 3>> Pileup::computeLikelihoods(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout) {
     // computes likelihoods L(g=0, 1, 2) for each cell
     vector<array<wrdouble, 3>> likelihoods;
     for (auto &cell: cells) {
@@ -178,14 +185,57 @@ vector<array<wrdouble, 3>> Pileup::computeLikelihoods(array<array<array<double, 
     return likelihoods;
 }
 
+vector<wrdouble> Pileup::computeDP(const vector<array<wrdouble, 3>>& likelihoods) {
+    // computes dp for h_j,l and returns the row for j = numCells
+    vector<vector<wrdouble>> mem;
+    mem.resize(numCells); // j = [0, numCells) - 0-indexed
+    for (int j = 0; j < numCells; j++) mem[j].resize(2*numCells+1, wrdouble(0)); // row j: l = [0, 2j+2]
+    
+    // Base case
+    mem[0][0] = likelihoods[0][0];
+    mem[0][1] = likelihoods[0][1] * 2.0;
+    mem[0][2] = likelihoods[0][2];
+    
+    // Recursive cases
+    for (int j = 1; j < numCells; j++) {
+        mem[j][0] = mem[j-1][0]*likelihoods[j][0];
+        mem[j][1] = mem[j-1][1]*likelihoods[j][0] + mem[j-1][0]*likelihoods[j][1]*2.0;
+        for (int l = 2; l <= 2*j+2; l++) {
+            mem[j][l] = mem[j-1][l]*likelihoods[j][0] + mem[j-1][l-1]*likelihoods[j][1]*2.0 + mem[j-1][l-2]*likelihoods[j][2];
+        }
+    }
+    
+    return mem[numCells-1]; // return the row for j = numCells
+}
 
-double Pileup::computeZeroVarProb(array<array<array<double, 4>, 4>, 4> genotypePriors, double pDropout) {
+vector<wrdouble> Pileup::computeAltLikelihoods(const vector<wrdouble>& dp) {
+    // computes alt count likelihoods, dividing each element i by 2*numCells C i
+    vector<wrdouble> combis = combi->getRow(2*numCells);
+    vector<wrdouble> altLikelihoods = dp;
+    for (int i = 0; i <= 2*numCells; i++) altLikelihoods[i] /= combis[i];
+    return altLikelihoods;
+}
+
+double Pileup::computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout) {
     // Generate variant number prior array
     vector<double> altCountPriors = genAltCountPriors(cellsWithRead());
+    
     // Generate likelihoods L(g=0, 1, 2) for each cell
     vector<array<wrdouble, 3>> likelihoods = computeLikelihoods(genotypePriors, pDropout);
     
+    // Generate dp
+    vector<wrdouble> dp = computeDP(likelihoods);
+
+    // Generate alternate count likelihoods
+    vector<wrdouble> altLikelihoods = computeAltLikelihoods(dp);
     
-    return 0.0;
+    // Compute probability of mutation
+    wrdouble base = 0;
+    for (int i = 0; i <= 2*numCells; i++) {
+        base += altLikelihoods[i] * altCountPriors[i];
+    }
+    wrdouble probability = altLikelihoods[0] * altCountPriors[0] / base; 
+    
+    return double(probability);
 }
 

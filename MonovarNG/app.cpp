@@ -9,6 +9,7 @@
 #include "app.hpp"
 #include "vcf.hpp"
 #include "utility.hpp"
+#include "combination.hpp"
 
 #include <cstdio>
 #include <iostream>
@@ -17,8 +18,7 @@
 using namespace std;
 using namespace utility;
 
-App::App(Config config, vector<string> bamIDs, vector<Pileup> pileupRows) : mutationThreshold(config.mutationThreshold), pFalsePositive(config.pFalsePositive), pDropout(config.pDropout), numThreads(config.numThreads), useConsensusFilter(config.useConsensusFilter), positions(pileupRows) {
-    
+App::App(Config config, vector<string> bamIDs, vector<Pileup> pileupRows) : mutationThreshold(config.mutationThreshold), pFalsePositive(config.pFalsePositive), pDropout(config.pDropout), numThreads(config.numThreads), useConsensusFilter(config.useConsensusFilter), positions(pileupRows), combi(Combination(2*bamIDs.size())) {
     numCells = bamIDs.size();
     
     // Write some VCF stuff
@@ -26,12 +26,17 @@ App::App(Config config, vector<string> bamIDs, vector<Pileup> pileupRows) : muta
     output.write_stuff(bamIDs);
     
     numPos = positions.size();
+    
+    // Set combi object for each pileup
+    for (auto& row: positions) {
+        row.setCombi(&combi);
+    }
 }
 
 void App::runAlgo() {
     for (int rowN = 0; rowN < numPos; rowN++) {
-        Pileup position = positions[rowN];
-        
+        Pileup& position = positions[rowN];
+                
         int totalDepth = position.totalDepth(), refDepth = position.refDepth(); // total no. of reads / no. matching reference base
         
         int altCount = totalDepth - refDepth; // no. of alternate reads
@@ -74,8 +79,9 @@ void App::runAlgo() {
         
         // Compute probability of zero mutations given data
         double zeroVarProb = position.computeZeroVarProb(genotypePriors, pDropout);
-//        printf("%lf\n", zeroVarProb);
-        
+        if (zeroVarProb < 0.5) {
+            printf("%d %lf\n", rowN+1, zeroVarProb);
+        }
         
         
         

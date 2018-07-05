@@ -1,4 +1,4 @@
-//  Wide Range Doubles
+;//  Wide Range Doubles
 //  wrdouble.cpp
 //  MonovarNG
 //
@@ -13,13 +13,15 @@
 double wrdouble::base = pow(double(2), 64);
 double wrdouble::invBase = pow(double(2), -64);
 
+wrdouble::wrdouble() {} // default constructor
+
 wrdouble::wrdouble(double value, int exponent): value(value), exponent(exponent) {} // constructor
 
 wrdouble::wrdouble(double n) {
     // constructor from double
     if (n == 0) { // if zero
         value = 0;
-        exponent = -1e9; // this number is very small!
+        exponent = -1e6; // this number is very small!
         return;
     }
     exponent = 0;
@@ -43,16 +45,28 @@ wrdouble::operator double() {
     return n;
 }
 
-wrdouble::operator string() {
+wrdouble::operator string() const {
     // casting to string
+    if (value == 0) return "0";
     double logged = log10(value) + log10(2) * 64 * exponent;
-    double val = pow(double(10), logged-int(logged)+1);
-    int exp = logged-1;
+    double val = pow(double(10), logged-floor(logged));
+    int exp = floor(logged);
     return to_string(val) + "e" + to_string(exp);
+}
+
+ostream& operator<<(ostream& out, const wrdouble& n) {
+    // printing conversion
+    out << string(n); 
+    return out;
 }
 
 wrdouble& wrdouble::operator=(double n) {
     // assignment of double
+    if (n == 0) { // if zero
+        value = 0;
+        exponent = -1e6; // this number is very small!
+        return *this;
+    }
     exponent = 0;
     value = n;
     while (value < 1) { // if n < 1
@@ -90,7 +104,7 @@ bool wrdouble::operator>(wrdouble& n) {
 }
 
 
-wrdouble wrdouble::operator*(const wrdouble& n) {
+wrdouble wrdouble::operator*(const wrdouble& n) const {
     // multiplication
     int newexp = exponent + n.exponent;
     double newval = value * n.value;
@@ -101,18 +115,18 @@ wrdouble wrdouble::operator*(const wrdouble& n) {
     return wrdouble(newval, newexp);
 }
 
-wrdouble wrdouble::operator/(const wrdouble& n) {
+wrdouble wrdouble::operator/(const wrdouble& n) const {
     // division
     int newexp = exponent - n.exponent;
     double newval = value / n.value;
-    if (newval < 1) {
+    if (newval < 1 && newval != 0) {
         newexp--;
         newval *= base;
     }
     return wrdouble(newval, newexp);
 }
 
-wrdouble wrdouble::operator+(const wrdouble& n) {
+wrdouble wrdouble::operator+(const wrdouble& n) const {
     // addition
     if (exponent > n.exponent+1) { // if this >> n
         return *this;
@@ -145,17 +159,17 @@ wrdouble wrdouble::operator+(const wrdouble& n) {
     }
 }
 
-wrdouble wrdouble::operator*(double n) {
+wrdouble wrdouble::operator*(double n) const {
     // multiplication with double
     return (*this) * wrdouble(n);
 }
 
-wrdouble wrdouble::operator/(double n) {
+wrdouble wrdouble::operator/(double n) const {
     // division with double
     return (*this) / wrdouble(n);
 }
 
-wrdouble wrdouble::operator+(double n) {
+wrdouble wrdouble::operator+(double n) const {
     // addition with double
     return (*this) + wrdouble(n);
 }
@@ -176,7 +190,7 @@ wrdouble& wrdouble::operator/=(const wrdouble& n) {
     // division and assignment
     exponent -= n.exponent;
     value /= n.value;
-    if (value < 1) {
+    if (value < 1 && value != 0) {
         exponent--;
         value *= base;
     }
