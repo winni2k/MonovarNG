@@ -18,10 +18,10 @@
 using namespace std;
 using namespace utility;
 
-
 int main(int argc, const char * argv[]) {
 //    test();
     
+    auto start = chrono::high_resolution_clock::now();
     Config config = setupConfig(argc, argv);
     
     vector<string> bamIDs = getBamIDs(config.bamfileNames);
@@ -32,7 +32,17 @@ int main(int argc, const char * argv[]) {
     
     App app(config, bamIDs, pileup);
     
-    app.runAlgo();
+    auto end = chrono::high_resolution_clock::now();
+    auto setupTime = end-start;
+    printf("Time for setup = %lldms\n", chrono::duration_cast<chrono::milliseconds>(setupTime).count());
     
+    start = chrono::high_resolution_clock::now();
+    app.runAlgo();
+    end = chrono::high_resolution_clock::now();
+    auto algoTime = end-start;
+    printf("Time for algo = %lldms\n", chrono::duration_cast<chrono::milliseconds>(algoTime).count());
+    printf("Total time = %lfs\n", double(chrono::duration_cast<chrono::milliseconds>(setupTime+algoTime).count())/1000);
+    
+    exit(0); // skip deallocation
     return 0;
 }

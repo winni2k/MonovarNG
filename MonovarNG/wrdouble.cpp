@@ -1,4 +1,4 @@
-;//  Wide Range Doubles
+//  Wide Range Doubles
 //  wrdouble.cpp
 //  MonovarNG
 //
@@ -51,7 +51,8 @@ wrdouble::operator string() const {
     double logged = log10(value) + log10(2) * 64 * exponent;
     double val = pow(double(10), logged-floor(logged));
     int exp = floor(logged);
-    return to_string(val) + "e" + to_string(exp);
+    if (abs(exp) <= 5) return to_string(val*pow(10, exp));
+    else return to_string(val) + "e" + to_string(exp);
 }
 
 ostream& operator<<(ostream& out, const wrdouble& n) {

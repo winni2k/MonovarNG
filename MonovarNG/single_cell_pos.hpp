@@ -9,6 +9,8 @@
 #ifndef single_cell_pos_hpp
 #define single_cell_pos_hpp
 
+#include "phred.hpp"
+
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -22,17 +24,15 @@ struct SingleCellPos {
     string qualityString; // quality string for qualities at position, for cell
     vector<double> qualities; // qualities for each read at position, for cell
     
-    SingleCellPos(int numReads, string bases, string qualityString);
+    SingleCellPos(int numReads, string& bases, string& qualityString);
     
     int refCount(); // gets number of forward + backward matching reads matching reference base
     bool hasReads(); // gets whether the cell has reads (nonzero read depth)
     bool hasAltAllele(); // gets whether the cell has alternate alleles (non ,.)
     
-    void removeInsDels(); // removes all insertions and deletions from the bases
-    void removeStartEnd(); // removes all start and end read symbols
-    void cleanupBases(char refBase); // cleans up bases such that it contains 'ACTG' only
+    void sanitizeBases(char refBase); // remove ins/deletions, special symbols, and cleans up all bases. Also converts to numbers
     void truncateReads(); // truncates numReads, bases and qualities to the shortest length; a naive way of dealing with input deviations
-    void computeQuality(); // Converts the quality score string into decimal scores
+    void computeQuality(const Phred* phred); // Converts the quality score string into decimal scores
     void convertBasesToInt(); // Converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure
     
     array<int, 4> baseFreq(); // gets frequencies of each base - A, C, T, G

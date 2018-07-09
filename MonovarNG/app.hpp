@@ -37,11 +37,12 @@ class App {
     VCFDocument output;
     
     Combination combi; // computes nCr
+    Phred phred; // computes phred probabilities
     
-    vector<Pileup> positions;
+    vector<Pileup>& positions;
     
 public:
-    App(Config config, vector<string> bamIDs, vector<Pileup> pileupRows);
+    App(Config& config, vector<string>& bamIDs, vector<Pileup>& pileupRows);
     
     void runAlgo();
     // Runs main algorithm

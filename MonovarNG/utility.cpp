@@ -20,6 +20,7 @@
 #include <array>
 
 using namespace std;
+using namespace utility;
 
 Config utility::setupConfig(int argc, const char *argv[]) {
     // Setup app configurations

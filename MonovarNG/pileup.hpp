@@ -12,6 +12,7 @@
 #include "single_cell_pos.hpp"
 #include "wrdouble.hpp"
 #include "combination.hpp"
+#include "phred.hpp"
 
 #include <stdio.h>
 #include <string>
@@ -33,12 +34,13 @@ struct Pileup {
     vector<SingleCellPos> allCells; // data for all cells, an archived version of cells
     
     const Combination* combi; // computes nCr, as a row of nC0...nCn
+    const Phred* phred; // computes phred quality scores
     
-    Pileup(int numCells, string row);
+    Pileup(int numCells, string& row);
     
     void print(string filename = ""); // prints bases and qualities for debugging, and appends to file if specified
     
-    void setCombi(const Combination* combiPtr); // sets combi
+    void setObjs(const Combination* combiPtr, const Phred* phred); // sets combi and phred
     
     int totalDepth(); // gets total depth (no. of reads)
     int refDepth(); // gets number of reads matching reference base
@@ -59,7 +61,7 @@ struct Pileup {
     vector<array<wrdouble, 3>> computeLikelihoods(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes likelihoods L(g=0, 1, 2) for each cell
     vector<wrdouble> computeDP(const vector<array<wrdouble, 3>>& likelihoods); // computes dp for h_j,l and returns the row for j = numCells
     vector<wrdouble> computeAltLikelihoods(const vector<wrdouble>& dp); // computes alt count likelihoods, dividing each element i by 2*numCells C i
-    double computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes the probability of zero mutations given data
+    wrdouble computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes the probability of zero mutations given data
 
 };
 

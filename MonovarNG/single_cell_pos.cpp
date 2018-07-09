@@ -7,6 +7,7 @@
 //
 
 #include "single_cell_pos.hpp"
+#include "phred.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -18,12 +19,12 @@
 
 using namespace std;
 
-SingleCellPos::SingleCellPos(int numReads, string bases, string qualityString) : numReads(numReads), bases(bases), qualityString(qualityString) {} // initializer sets default values
+SingleCellPos::SingleCellPos(int numReads, string& bases, string& qualityString) : numReads(numReads), bases(bases), qualityString(qualityString) {} // initializer sets default values
 
 int SingleCellPos::refCount() {
     // Returns number of forward + backward matching reads matching reference base
     int count = 0;
-    for (char base: bases) {
+    for (char& base: bases) {
         if (base == '.' || base == ',') count++;
     }   
     return count;
@@ -39,19 +40,32 @@ bool SingleCellPos::hasAltAllele() {
     return numReads - refCount();
 }
 
-void SingleCellPos::removeInsDels() { 
-    // removes all insertions and deletions from the bases
+void SingleCellPos::sanitizeBases(char refBase) { 
+    // remove ins/deletions, special symbols, and cleans up all bases. Also converts to numbers
     string newBases = "";
+    newBases.reserve(bases.size());
+    
     int state = 0; // 0 = normal, 1 = counting no. of ins/del, 2 = deleting ins/dels
     int baseCount = 0; // count of the number of bases inserted/deleted
-    for (char c: bases) {
+    for (int i = 0; i < bases.size(); i++) {
+        char& c = bases[i];
         if (state == 0) {
             if (c == '+' || c == '-') {
                 // Insertion/deletion begins
                 state = 1;
                 baseCount = 0;
             } else {
-                newBases += c;
+                // Run other filters - start/end, and sanitize
+                if (c == '^') { // start/end
+                    i++; // skip one more character
+                } else if (c != '$') {
+                    // sanitization
+                    if (c == '.' || c == ',' || c == '*') newBases += refBase;
+                    else if (c == 'A' || c == 'a') newBases += char(0);
+                    else if (c == 'C' || c == 'c') newBases += char(1);
+                    else if (c == 'T' || c == 't') newBases += char(2);
+                    else if (c == 'G' || c == 'g') newBases += char(3);
+                }
             }
         } else if (state == 1) {
             if (isdigit(c)) {
@@ -65,7 +79,17 @@ void SingleCellPos::removeInsDels() {
                 if (baseCount == 0) state = 0;
             } else {
                 state = 0;
-                newBases += c;
+                // Run other filters - start/end, and sanitize
+                if (c == '^') { // start/end
+                    i++; // skip one more character
+                } else if (c != '$') {
+                    // sanitization
+                    if (c == '.' || c == ',' || c == '*') newBases += refBase;
+                    else if (c == 'A' || c == 'a') newBases += char(0);
+                    else if (c == 'C' || c == 'c') newBases += char(1);
+                    else if (c == 'T' || c == 't') newBases += char(2);
+                    else if (c == 'G' || c == 'g') newBases += char(3);
+                }
             }
         } else if (state == 2) {
             baseCount--;
@@ -73,33 +97,6 @@ void SingleCellPos::removeInsDels() {
         }
     }
     
-    bases = newBases;
-}
-
-void SingleCellPos::removeStartEnd() {
-    // removes all start and end read symbols
-    // note that a ^ is followed by another character denoting quality
-    string newBases = "";
-    for (int i = 0; i < bases.size(); i++) {
-        char c = bases[i];
-        if (c != '$' && c != '^') {
-            newBases += c;
-        } else if (c == '^') {
-            i++; // skip one more character
-        }
-    }
-    bases = newBases;
-}
-
-void SingleCellPos::cleanupBases(char refBase) {
-    // cleans up bases such that it contains 'ACTG' only
-    string newBases = "";
-    for (char c: bases) {
-        if (string(",.*actgACTG").find(c) != string::npos) {
-            if (c == '.' || c == ',' || c == '*') newBases += refBase;
-            else newBases += toupper(c);
-        }
-    }
     bases = newBases;
 }
 
@@ -111,21 +108,12 @@ void SingleCellPos::truncateReads() {
     qualityString.resize(minLength);
 }
 
-void SingleCellPos::computeQuality() {
+void SingleCellPos::computeQuality(const Phred* phred) {
+    qualities.reserve(numReads);
     // Converts the quality score string into decimal scores
-    for (char c: qualityString) {
-        int phred = (int) c - 33;
-        qualities.push_back(pow((double) 10.0, -(double)phred/10));
-    }
-}
-
-void SingleCellPos::convertBasesToInt() {
-    // Converts all bases to integers: A=0, C=1, T=2, G=3, without changing data structure
-    for (int i = 0; i < bases.size(); i++) {
-        string mapping = "ACTG";
-        for (int j = 0; j < 4; j++) {
-            if (bases[i] == mapping[j]) bases[i] = j;
-        }
+    for (char& c: qualityString) {
+        int phredVal = (int) c - 33;
+        qualities.push_back(phred->qualities[phredVal]);
     }
 }
 
@@ -133,21 +121,8 @@ void SingleCellPos::convertBasesToInt() {
 array<int, 4> SingleCellPos::baseFreq() {
     // gets frequencies of each base - A, C, T, G
     array<int, 4> freq = {0};
-    for (char c: bases) {
-        switch (c) {
-            case 'A':
-                freq[0]++;
-                break;
-            case 'C':
-                freq[1]++;
-                break;
-            case 'T':
-                freq[2]++;
-                break;
-            case 'G':
-                freq[3]++;
-                break;
-        }
+    for (char& c: bases) {
+        freq[c]++;
     }
     return freq;
 }

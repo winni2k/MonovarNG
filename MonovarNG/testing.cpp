@@ -13,6 +13,8 @@
 
 #include <iostream>
 #include <array>
+#include <chrono>
+#include <vector>
 
 using namespace std;
 using namespace utility;
@@ -50,11 +52,84 @@ void test() {
 //    wrdouble a = 1e-100;
 //    a *= 3e50;
 //    cout << a;
+//    
+//    wrdouble a = 0;
+//    wrdouble b = wrdouble(1.1, -50);
+//    cout << b << endl;
+//    cout << a+b << endl;
+//    cout << wrdouble(0) + b << endl;
+    // testing double multiplication
     
-    wrdouble a = 0;
-    wrdouble b = wrdouble(1.1, -50);
-    cout << b << endl;
-    cout << a+b << endl;
-    cout << wrdouble(0) + b << endl;
+//    vector<double> a;
+//    for (int i = 0; i < 1000000; i++) a.push_back(1.0);
+//    
+//    auto start = chrono::high_resolution_clock::now();
+//    for (int i = 0; i < 1000000; i++) {
+//        for (int j = 0; j < 1000; j++) {
+//            a[i] *= 1.23456789;
+//        }
+//    }
+//    auto end = chrono::high_resolution_clock::now();
+//    auto elapsed = end-start;
+//    printf("Time for 1e9 double multiplications = %lld\n", chrono::duration_cast<chrono::milliseconds>(elapsed).count());
+//    
+//    // testing wrdouble multiplication
+//    vector<wrdouble> b;
+//    for (int i = 0; i < 1000000; i++) b.push_back(wrdouble(1.0));
+//    wrdouble mult = 1.23456789;
+//    
+//    start = chrono::high_resolution_clock::now();
+//    for (int i = 0; i < 1000000; i++) {
+//        for (int j = 0; j < 1000; j++) {
+//            b[i] = b[i] * mult;
+//        }
+//    }
+//    end = chrono::high_resolution_clock::now();
+//    elapsed = end-start;
+//    printf("Time for 1e9 wrdouble multiplications = %lld\n", chrono::duration_cast<chrono::milliseconds>(elapsed).count());
+//    
+//    // testing double addition
+//    
+//    for (int i = 0; i < 1000000; i++) a[i] = 1.0;
+//    
+//    start = chrono::high_resolution_clock::now();
+//    for (int i = 0; i < 1000000; i++) {
+//        for (int j = 0; j < 1000; j++) {
+//            a[i] += 1.23456789;
+//        }
+//    }
+//    end = chrono::high_resolution_clock::now();
+//    elapsed = end-start;
+//    printf("Time for 1e9 double additions = %lld\n", chrono::duration_cast<chrono::milliseconds>(elapsed).count());
+//    
+//    // testing wrdouble addition
+//    for (int i = 0; i < 1000000; i++) b[i] = 1.0;
+//    wrdouble add = 1.23456789;
+//    
+//    start = chrono::high_resolution_clock::now();
+//    for (int i = 0; i < 1000000; i++) {
+//        for (int j = 0; j < 1000; j++) {
+//            b[i] = b[i]+add;
+//        }
+//    }
+//    end = chrono::high_resolution_clock::now();
+//    elapsed = end-start;
+//    printf("Time for 1e9 wrdouble additions = %lld\n", chrono::duration_cast<chrono::milliseconds>(elapsed).count());
     
+    // testing wrdouble assignment
+    vector<wrdouble> b;
+    
+    for (int i = 0; i < 1000000; i++) b.push_back(1.0);
+    wrdouble add = 1.23456789;
+    
+    auto start = chrono::high_resolution_clock::now();
+    for (int i = 0; i < 1000000; i++) {
+        for (int j = 0; j < 1000; j++) {
+            b[i] = add;
+        }
+    }
+    auto end = chrono::high_resolution_clock::now();
+    auto elapsed = end-start;
+    printf("Time for 1e9 wrdouble assignments = %lld\n", chrono::duration_cast<chrono::milliseconds>(elapsed).count());
+
 }
