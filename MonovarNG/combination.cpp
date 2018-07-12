@@ -36,3 +36,8 @@ const vector<wrdouble> Combination::getRow(int n) const {
     // Gets the row for nC0...nCn
     return mem[n];
 }
+
+wrdouble Combination::getValue(int n, int r) const {
+    // Gets nCr
+    return mem[n][r];
+}

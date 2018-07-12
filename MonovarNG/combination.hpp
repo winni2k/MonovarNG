@@ -22,7 +22,8 @@ class Combination { // Computes nCr and stores it for use
 public:
     Combination(); // default constructor
     Combination (int width); // width = largest n, 0C0 to widthCwidth. Width at least 1
-    const vector<wrdouble> getRow(int n) const; // gets the row for nC0...nCn 
+    const vector<wrdouble> getRow(int n) const; // gets the row for nC0...nCn
+    wrdouble getValue(int n, int r) const; // gets nCr
 };
 
 #endif /* combination_hpp */

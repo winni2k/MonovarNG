@@ -45,10 +45,18 @@ void Pileup::print(string filename) {
     // prints bases and qualities for debugging
     if (filename.size()) freopen(filename.c_str(), "a", stdout); // save to file
     //    printf("%d\n", seqPos);
+    printf("%d cells.\n", numCells);
+    printf("Ref = %d, alt = %d\n", refBase, altBase);
+    printf("Bases:\n");
     for (auto &cell: cells) {
         for (char c: cell.bases) printf("%d", c);
         printf("\n");
     }
+//    printf("Qualities:\n");
+//    for (auto &cell: cells) {
+//        for (double v: cell.qualities) printf("%lf\t", v);
+//        printf("\n");
+//    }
 }
 
 
@@ -158,21 +166,23 @@ vector<array<wrdouble, 3>> Pileup::computeLikelihoods(const array<array<array<do
         
         wrdouble g0 = 1.0, g2 = 1.0, probNoADO = 1.0;
         for (int i = 0; i < cell.numReads; i++) {
-            double probRead = genotypePriors[refBase][refBase][cell.bases[i]]; // likelihood of read given both refbase
             // g = 0
-            collect0 *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead;
+            double probRead0 = genotypePriors[refBase][refBase][cell.bases[i]]; // likelihood of read given both refbase
+            collect0 *= cell.qualities[i]*(1-probRead0)/3 + (1-cell.qualities[i])*probRead0;
             if (!(i%30)) {
                 g0 *= collect0;
                 collect0 = 1.0;
             }
             // g = 2
-            collect2 *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead;
+            double probRead2 = genotypePriors[altBase][altBase][cell.bases[i]]; // likelihood of read given both refbase
+            collect2 *= cell.qualities[i]*(1-probRead2)/3 + (1-cell.qualities[i])*probRead2;
             if (!(i%30)) {
                 g2 *= collect2;
                 collect2 = 1.0;
             }
             // g = 1
-            collect1 *= cell.qualities[i]*(1-probRead)/3 + (1-cell.qualities[i])*probRead;
+            double probRead1 = genotypePriors[refBase][altBase][cell.bases[i]]; // likelihood of read given both refbase
+            collect1 *= cell.qualities[i]*(1-probRead1)/3 + (1-cell.qualities[i])*probRead1;
             if (!(i%30)) {
                 probNoADO *= collect1;
                 collect1 = 1.0;
@@ -194,8 +204,8 @@ vector<array<wrdouble, 3>> Pileup::computeLikelihoods(const array<array<array<do
 vector<wrdouble> Pileup::computeDP(const vector<array<wrdouble, 3>>& likelihoods) {
     // computes dp for h_j,l and returns the row for j = numCells
     vector<vector<wrdouble>> mem;
-    mem.resize(numCells); // j = [0, numCells) - 0-indexed
-    for (int j = 0; j < numCells; j++) mem[j].resize(2*numCells+1, wrdouble(0)); // row j: l = [0, 2j+2]
+    mem.resize(likelihoods.size()); // j = [0, numCells) - 0-indexed
+    for (int j = 0; j < likelihoods.size(); j++) mem[j].resize(2*likelihoods.size()+1, wrdouble(0)); // row j: l = [0, 2j+2]
     wrdouble wr2 = 2.0;
     
     // Base case
@@ -204,7 +214,7 @@ vector<wrdouble> Pileup::computeDP(const vector<array<wrdouble, 3>>& likelihoods
     mem[0][2] = likelihoods[0][2];
     
     // Recursive cases
-    for (int j = 1; j < numCells; j++) {
+    for (int j = 1; j < likelihoods.size(); j++) {
         mem[j][0] = mem[j-1][0]*likelihoods[j][0];
         mem[j][1] = mem[j-1][1]*likelihoods[j][0] + mem[j-1][0]*likelihoods[j][1]*wr2;
         for (int l = 2; l <= 2*j+2; l++) {
@@ -212,7 +222,7 @@ vector<wrdouble> Pileup::computeDP(const vector<array<wrdouble, 3>>& likelihoods
         }
     }
     
-    return mem[numCells-1]; // return the row for j = numCells
+    return mem[likelihoods.size()-1]; // return the row for j = numCells
 }
 
 vector<wrdouble> Pileup::computeAltLikelihoods(const vector<wrdouble>& dp) {
@@ -228,21 +238,100 @@ wrdouble Pileup::computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& 
     vector<double> altCountPriors = genAltCountPriors(cellsWithRead());
     
     // Generate likelihoods L(g=0, 1, 2) for each cell
-    vector<array<wrdouble, 3>> likelihoods = computeLikelihoods(genotypePriors, pDropout);
-    
-    // Generate dp
-    vector<wrdouble> dp = computeDP(likelihoods);
+    likelihoodsGlob = computeLikelihoods(genotypePriors, pDropout);
 
+    // Generate dp
+    vector<wrdouble> dp = computeDP(likelihoodsGlob);
+    
     // Generate alternate count likelihoods
     vector<wrdouble> altLikelihoods = computeAltLikelihoods(dp);
     
     // Compute probability of mutation
-    wrdouble base = 0;
+    probBase = 0.0;
     for (int i = 0; i <= 2*numCells; i++) {
-        base += altLikelihoods[i] * altCountPriors[i];
+        probBase += altLikelihoods[i] * altCountPriors[i];
     }
-    wrdouble probability = altLikelihoods[0] * altCountPriors[0] / base; 
-    
+    wrdouble probability = (altLikelihoods[0] * altCountPriors[0]) / probBase; 
     return probability;
 }
+
+double Pileup::computeC(int l, int v) {
+    // computes the C function
+//    return combi->getValue(l, v) * combi->getValue(2*numCells-l, 2-v) / combi->getValue(2*numCells, 2);
+    if (v == 0) {
+        return (2.0*numCells-l)*(2.0*numCells-l-1)/((2.0*numCells)*(2.0*numCells-1));
+    } else if (v == 1) {
+        return 2.0*l*(2*numCells-l)/((2.0*numCells)*(2.0*numCells-1));
+    } else {
+        return (1.0*l*(l-1))/((2.0*numCells)*(2.0*numCells-1));
+    }
+}
+
+vector<int> Pileup::computeGenotype() {
+    // computes the genotype of each cell, 0, 1 or 2
+    vector<double> altCountPriors = genAltCountPriors(numCells);
+    
+    vector<int> genotypes; genotypes.reserve(numCells);
+    for (int i = 0; i < numCells; i++) {
+        // Build new likelihoods, by removing this cell
+        vector<array<wrdouble, 3>> newLikelihoods;
+        newLikelihoods.reserve(numCells-1);
+        for (int j = 0; j < numCells; j++) {
+            if (j != i) newLikelihoods.push_back(likelihoodsGlob[j]);
+        }
+        vector<wrdouble> dp;
+        if (numCells != 1) dp = computeDP(newLikelihoods);
+        
+        wrdouble probs[3]; // probability of each genotype
+        for (int j = 0; j < 3; j++) {
+            probs[j] = 0.0;
+            if (numCells != 1) {
+                for (int l = j; l <= 2*numCells-2+j; l++) {
+    //                cout << "Base: " << probBase << endl;
+                    probs[j] += dp[l-j]*((computeC(l, j)*altCountPriors[l]));
+//                    cout << dp[l-j] << " " << computeC( l, j) << " " << altCountPriors[l] << endl; 
+//                    cout << "prob: " << probs[j] << endl;
+                }
+            } else probs[j] = altCountPriors[i]; // There aren't any other cells
+            
+//            cout << "before multiply" << probs[j] << "\t";
+            probs[j] *= likelihoodsGlob[i][j];
+//            cout << "after multiply" << probs[j] << "\t";
+            probs[j] /= probBase;
+            cout << probs[j] << "\t";
+//            cout << "finalprob: " << probs[j] << "\n";
+        }
+        cout << endl;
+        
+        int bestGenotype = -1;
+        wrdouble highestProb = 0;
+        for (int j = 0; j < 3; j++) {
+            if (probs[j] > highestProb) {
+                highestProb = probs[j];
+                bestGenotype = j;
+            }
+        }
+        genotypes.push_back(bestGenotype);
+    }
+    return genotypes;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

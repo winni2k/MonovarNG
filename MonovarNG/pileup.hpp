@@ -36,6 +36,9 @@ struct Pileup {
     const Combination* combi; // computes nCr, as a row of nC0...nCn
     const Phred* phred; // computes phred quality scores
     
+    vector<array<wrdouble, 3>> likelihoodsGlob; // Likelihoods, saved from zeroVarProb for use in genotyping
+    wrdouble probBase; // base, sum0_2m p(D|l)p(l) 
+    
     Pileup(int numCells, string& row);
     
     void print(string filename = ""); // prints bases and qualities for debugging, and appends to file if specified
@@ -62,7 +65,8 @@ struct Pileup {
     vector<wrdouble> computeDP(const vector<array<wrdouble, 3>>& likelihoods); // computes dp for h_j,l and returns the row for j = numCells
     vector<wrdouble> computeAltLikelihoods(const vector<wrdouble>& dp); // computes alt count likelihoods, dividing each element i by 2*numCells C i
     wrdouble computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes the probability of zero mutations given data
-
+    double computeC(int l, int v); // computes the C function
+    vector<int> computeGenotype(); // computes the genotype of each cell, 0, 1 or 2
 };
 
 #endif /* pileup_hpp */

@@ -36,6 +36,7 @@ App::App(Config& config, vector<string>& bamIDs, vector<Pileup>& pileupRows) : m
 }
 
 void App::runAlgo() {
+    int mutationCount = 0;
     for (int rowN = 0; rowN < numPos; rowN++) {
         Pileup& position = positions[rowN];
                 
@@ -82,9 +83,14 @@ void App::runAlgo() {
         // Compute probability of zero mutations given data
         wrdouble zeroVarProb = position.computeZeroVarProb(genotypePriors, pDropout);
         if (zeroVarProb < 0.05) {
-//            cout << position.seqID << " " << position.seqPos << " " << zeroVarProb << endl;
+            cout << position.seqID << " " << position.seqPos << " " << zeroVarProb << endl;
+            position.print();
+            vector<int> genotypes = position.computeGenotype();
+//            for (int i = 0; i < genotypes.size(); i++) cout << genotypes[i] << "\t";
+//            cout << endl;
+            mutationCount++;
         }
-        
+
         
         
         
@@ -93,4 +99,5 @@ void App::runAlgo() {
         
         if ((rowN+1) % 10000 == 0) printf("Processed row %d\n", rowN+1);
     }
+    cout << mutationCount << endl;
 }
