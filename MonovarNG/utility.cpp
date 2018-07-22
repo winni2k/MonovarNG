@@ -27,7 +27,7 @@ Config utility::setupConfig(int argc, const char *argv[]) {
     Config config;
     
     if (argc < 5) {
-        throw invalid_argument("Incorrect arguments.\nUsage: monovarNG referenceFile bamFilenames pileupFile outputFile [-patm]\nOptions:\n-t: Threshold to be used for variant calling (Recommended value: 0.05)\n-p: Offset for prior probability for false-positive error (Recommended value: 0.002)\n-a: Offset for prior probability for allelic drop out (Default value: 0.2)\n-m: Number of threads to use in multiprocessing (Default value: 4)");
+        throw invalid_argument("Incorrect arguments.\nUsage: monovar referenceFile bamFilenames pileupFile outputFile [-patm]\nOptions:\n-t: Threshold to be used for variant calling (Recommended value: 0.05)\n-p: Offset for prior probability for false-positive error (Recommended value: 0.002)\n-a: Offset for prior probability for allelic drop out (Default value: 0.2)\n-m: Number of threads to use in multiprocessing (Default value: 4)");
     }
     
     config.referenceFilename = argv[1];
