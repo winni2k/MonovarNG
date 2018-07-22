@@ -107,7 +107,7 @@ void App::processRow(int rowN) {
 void App::runAlgo() {
     ThreadPool pool(numThreads);
     for (int rowN = 0; rowN < numPos; rowN++) {
-        pool.enqueue(&App::processRow, this, rowN);
-//        processRow(rowN); // single threaded
+        if (numThreads > 1) pool.enqueue(&App::processRow, this, rowN);
+        else processRow(rowN); // single threaded
     }
 }

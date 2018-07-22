@@ -3,11 +3,24 @@
 **MonovarNG** is a single nucleotide variant (SNV) detection and genotyping algorithm for single-cell DNA sequencing data. It takes a list of bam files as input and outputs a vcf file containing the detected SNVs. This improved version of Monovar is written in C++ and achieves 100x speedup over the original Monovar.
 
 ## Dependencies ##
-* Boost C++
-* Samtools/htslib, the C library
+* [Boost C++](http://boost.org)
+* [Htslib](http://htslib.org)
+* [Cmake](http://cmake.org)
 
 ## Installation ##
-to be specified
+Install dependencies
+```
+sudo apt-get install cmake libboost-all-dev zlib1g-dev libbz2-dev liblzma-dev 
+```
+Install htslib
+```
+wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
+tar -xvf htslib-1.9.tar.bz2
+cd htslib-1.9
+./configure
+make
+sudo make install
+```
 
 ## Usage ##
 The program requires multiple bam files. The bam files should be sorted by coordinates. The raw sequence reads in .fastq format should be aligned to a reference genome with the help of an aligner program (e.g., BWA ([http://bio-bwa.sourceforge.net/]())). Aligner like BWA generates sam files containing aligned reads. The sam files can be converted to compressed bam files using ```samtools view``` command (see Samtools manual for details [http://www.htslib.org/doc/samtools.html]()). 

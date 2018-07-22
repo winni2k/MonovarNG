@@ -1,2 +1,8 @@
 MonovarNG.xcodeproj
 Testing
+bin
+build
+CMakeFiles
+CMakeCache.txt
+*.cmake
+Makefile
