@@ -10,7 +10,7 @@
 ## Installation ##
 Install dependencies
 ```
-sudo apt-get install cmake libboost-all-dev zlib1g-dev libbz2-dev liblzma-dev 
+sudo apt-get install git g++ cmake libboost-all-dev zlib1g-dev libbz2-dev liblzma-dev
 ```
 Install htslib
 ```
@@ -20,6 +20,14 @@ cd htslib-1.9
 ./configure
 make
 sudo make install
+```
+Build Monovar
+```
+cd
+git clone https://github.com/tianyi5309/MonovarNG
+cd MonovarNG
+cmake .
+make
 ```
 
 ## Usage ##
