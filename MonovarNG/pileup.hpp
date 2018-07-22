@@ -32,6 +32,7 @@ struct Pileup {
     char altBase; // alternate base at position
     vector<SingleCellPos> cells; // data for individual cell reads
     vector<SingleCellPos> allCells; // data for all cells, an archived version of cells
+    array<array<int, 2>, 4> strandCount; // number of forward and backward strands for each base.
     
     const Combination* combi; // computes nCr, as a row of nC0...nCn
     const Phred* phred; // computes phred quality scores
@@ -41,17 +42,19 @@ struct Pileup {
     
     Pileup(int numCells, string& row);
     
-    void print(string filename = ""); // prints bases and qualities for debugging, and appends to file if specified
+    void print(string filename = "", bool quality = false); // prints bases and qualities for debugging, and appends to file if specified
     
     void setObjs(const Combination* combiPtr, const Phred* phred); // sets combi and phred
     
     int totalDepth(); // gets total depth (no. of reads)
+    vector<pair<int, int>> cellDepths(); // gets depth for each cell
     int refDepth(); // gets number of reads matching reference base
+    
     
     int cellsWithRead(); // gets number of cells with reads
     int cellsWithAlt(); // gets number of cells with alternate alleles
     
-    void sanitizeBases(); // removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper
+    void sanitizeBases(); // removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper. Returns the number of forward and backward strands for each base.
     void computeQualities(); // converts the quality score string into decimal scores
     void filterCellsWithRead(); // archives cells to allCells, and filters cells for only those with reads
     
@@ -66,7 +69,13 @@ struct Pileup {
     vector<wrdouble> computeAltLikelihoods(const vector<wrdouble>& dp); // computes alt count likelihoods, dividing each element i by 2*numCells C i
     wrdouble computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& genotypePriors, double pDropout); // computes the probability of zero mutations given data
     double computeC(int l, int v); // computes the C function
-    vector<int> computeGenotype(); // computes the genotype of each cell, 0, 1 or 2
+    vector<int> computeGenotype(); // computes the genotype of each cell, 0, 1 or 2. -1 if the cell has no reads
+    
+    double computeWilcoxon(); // computes the Mann-Whitney-Wilcoxon U-test
+    double qualityByDepth(const double& quality, const vector<int>& genotype); // computes QualByDepth, quality divided by the number of reads in cells with mutation
+    double computeStrandBias(); // computes strand bias
+    double psarr(vector<pair<int, int>>& depths); // computes PSARR, ratio of per-sample alt allele to ref allele
+    
 };
 
 #endif /* pileup_hpp */

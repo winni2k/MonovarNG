@@ -23,7 +23,7 @@ struct Config {
     double pFalsePositive = 0.002; // p_e, prior probability for false positive 
     double pDropout = 0.02; // p_ad, prior probability for allelic dropout
     
-    int numThreads = 1; // number of threads for multiprocessing
+    int numThreads = 4; // number of threads for multiprocessing
     
     bool useConsensusFilter = false; // whether to use Consensus Filter (CF) 
 };

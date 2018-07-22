@@ -26,9 +26,8 @@ Config utility::setupConfig(int argc, const char *argv[]) {
     // Setup app configurations
     Config config;
     
-    // basic implementation, only parsing key variables
-    if (argc != 5) {
-        throw invalid_argument("Incorrect number of arguments; received " + to_string(argc-1) + " instead of 4.");
+    if (argc < 5) {
+        throw invalid_argument("Incorrect arguments.\nUsage: monovarNG referenceFile bamFilenames pileupFile outputFile [-patm]\nOptions:\n-t: Threshold to be used for variant calling (Recommended value: 0.05)\n-p: Offset for prior probability for false-positive error (Recommended value: 0.002)\n-a: Offset for prior probability for allelic drop out (Default value: 0.2)\n-m: Number of threads to use in multiprocessing (Default value: 4)");
     }
     
     config.referenceFilename = argv[1];
@@ -36,9 +35,49 @@ Config utility::setupConfig(int argc, const char *argv[]) {
     config.pileupFilename = argv[3];
     config.outputFilename = argv[4];
     
+    for (int i = 5; i < argc; i++) {
+        string token = argv[i];
+        if (token.size() > 0 && token[0] == '-') {
+            if (token.size() < 2) continue; // no option given
+            if (i+1 == argc) continue; // no argument given
+            switch(token[1]) {
+                case 't':
+                    config.mutationThreshold = atof(argv[i+1]);
+                    break;
+                case 'p':
+                    config.pFalsePositive = atof(argv[i+1]);
+                    break;
+                case 'a':
+                    config.pDropout = atof(argv[i+1]);
+                    break;
+                case 'm':
+                    config.numThreads = atoi(argv[i+1]);
+                    break;
+            }
+        }
+    }
+    
     return config;
 }
+
+vector<string> utility::getBamFilenames(string filename) {
+    // Gets bam filenames for all bam files named in file (at filename)
+    ifstream bamNameFile;
+    bamNameFile.open(filename);
     
+    // Get bam names
+    vector<string> bamNames;
+    string tmp;
+    while (getline(bamNameFile, tmp)) {
+        boost::trim(tmp);
+        if (tmp.size()) { // check if tmp is whitespace only 
+            bamNames.push_back(tmp);
+        }
+    }
+    bamNameFile.close();
+    return bamNames;
+}
+
 vector<string> utility::getBamIDs(string filename) {
     // Gets bam IDs for all bam files named in file (at filename)
     vector<string> ids;
@@ -56,7 +95,7 @@ vector<string> utility::getBamIDs(string filename) {
         }
     }
     bamNameFile.close();
-    
+
     // Open each bam file and get its readgroup ID
     for (string file: bamNames) {
         samFile * samfile = sam_open(file.c_str(), "r");
@@ -85,24 +124,28 @@ vector<string> utility::getBamIDs(string filename) {
     return ids;
 }
 
-vector<Pileup> utility::getPileup(int numCells, string filename) {
-    // Gets a list of pileup rows
+vector<string> utility::readPileup(int numCells, string filename) {
+    // Reads from pileup file, saving it as a vector of strings
+    printf("Reading from %s\n", filename.c_str());
     ifstream pileupFile;
     pileupFile.open(filename);
     
-    vector<Pileup> rows;
+    vector<string> rows;
     
     string row;
     while (getline(pileupFile, row)) {
         boost::trim(row);
         if (row.size()) {
-            rows.push_back(Pileup(numCells, row));
+            rows.push_back(row);
         }
     }
-    
-//    cout << to_string(rows.size()) << " rows read." << endl;
-    
+    printf("%d positions read.\n", rows.size());
     return rows;
+}
+
+Pileup utility::getPileup(int numCells, string& row) {
+    // Parses a row of pileup and return a pileup object
+    return Pileup(numCells, row);
 }
 
 array<array<array<double, 4>, 4>, 4> utility::genGenotypePriors(double p) {

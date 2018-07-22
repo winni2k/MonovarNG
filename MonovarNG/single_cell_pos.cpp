@@ -30,6 +30,15 @@ int SingleCellPos::refCount() {
     return count;
 }
 
+int SingleCellPos::countAllele(char allele) { 
+    // counts the number of a specific allele
+    int count = 0;
+    for (char& base: bases) {
+        if (base == allele) count++;
+    }
+    return count;
+}
+
 bool SingleCellPos::hasReads() {
     // Returns whether the cell has read support (nonzero reads)
     return numReads;
@@ -40,10 +49,13 @@ bool SingleCellPos::hasAltAllele() {
     return numReads - refCount();
 }
 
-void SingleCellPos::sanitizeBases(char refBase) { 
-    // remove ins/deletions, special symbols, and cleans up all bases. Also converts to numbers
+array<array<int, 2>, 4> SingleCellPos::sanitizeBases(char refBase) { 
+    // remove ins/deletions, special symbols, and cleans up all bases. Also converts to numbers. Returns the number of forward and backward strands for each base.
     string newBases = "";
     newBases.reserve(bases.size());
+    
+    array<array<int, 2>, 4> strandCount;
+    for (int i = 0; i < 4; i++) for (int j = 0; j < 2; j++) strandCount[i][j] = 0;
     
     int state = 0; // 0 = normal, 1 = counting no. of ins/del, 2 = deleting ins/dels
     int baseCount = 0; // count of the number of bases inserted/deleted
@@ -60,11 +72,37 @@ void SingleCellPos::sanitizeBases(char refBase) {
                     i++; // skip one more character
                 } else if (c != '$') {
                     // sanitization
-                    if (c == '.' || c == ',' || c == '*') newBases += refBase;
-                    else if (c == 'A' || c == 'a') newBases += char(0);
-                    else if (c == 'C' || c == 'c') newBases += char(1);
-                    else if (c == 'T' || c == 't') newBases += char(2);
-                    else if (c == 'G' || c == 'g') newBases += char(3);
+                    if (c == '.' || c == '*') {
+                        newBases += refBase;
+                        strandCount[refBase][0]++;
+                    } else if (c == ',') {
+                        newBases += refBase;
+                        strandCount[refBase][1]++;
+                    } else if (c == 'A') {
+                        newBases += char(0);
+                        strandCount[0][0]++;
+                    } else if (c == 'a') {
+                        newBases += char(0);
+                        strandCount[0][1]++;
+                    } else if (c == 'C') {
+                        newBases += char(1);
+                        strandCount[1][0]++;
+                    } else if (c == 'c') {
+                        newBases += char(1);
+                        strandCount[1][1]++;
+                    } else if (c == 'T') {
+                        newBases += char(2);
+                        strandCount[2][0]++;
+                    } else if (c == 't') {
+                        newBases += char(2);
+                        strandCount[2][1]++;
+                    } else if (c == 'G') {
+                        newBases += char(3);
+                        strandCount[3][0]++;
+                    } else if (c == 'g') {
+                        newBases += char(3);
+                        strandCount[3][1]++;
+                    }
                 }
             }
         } else if (state == 1) {
@@ -84,11 +122,37 @@ void SingleCellPos::sanitizeBases(char refBase) {
                     i++; // skip one more character
                 } else if (c != '$') {
                     // sanitization
-                    if (c == '.' || c == ',' || c == '*') newBases += refBase;
-                    else if (c == 'A' || c == 'a') newBases += char(0);
-                    else if (c == 'C' || c == 'c') newBases += char(1);
-                    else if (c == 'T' || c == 't') newBases += char(2);
-                    else if (c == 'G' || c == 'g') newBases += char(3);
+                    if (c == '.' || c == '*') {
+                        newBases += refBase;
+                        strandCount[refBase][0]++;
+                    } else if (c == ',') {
+                        newBases += refBase;
+                        strandCount[refBase][1]++;
+                    } else if (c == 'A') {
+                        newBases += char(0);
+                        strandCount[0][0]++;
+                    } else if (c == 'a') {
+                        newBases += char(0);
+                        strandCount[0][1]++;
+                    } else if (c == 'C') {
+                        newBases += char(1);
+                        strandCount[1][0]++;
+                    } else if (c == 'c') {
+                        newBases += char(1);
+                        strandCount[1][1]++;
+                    } else if (c == 'T') {
+                        newBases += char(2);
+                        strandCount[2][0]++;
+                    } else if (c == 't') {
+                        newBases += char(2);
+                        strandCount[2][1]++;
+                    } else if (c == 'G') {
+                        newBases += char(3);
+                        strandCount[3][0]++;
+                    } else if (c == 'g') {
+                        newBases += char(3);
+                        strandCount[3][1]++;
+                    }
                 }
             }
         } else if (state == 2) {
@@ -98,6 +162,8 @@ void SingleCellPos::sanitizeBases(char refBase) {
     }
     
     bases = newBases;
+    
+    return strandCount;
 }
 
 void SingleCellPos::truncateReads() {

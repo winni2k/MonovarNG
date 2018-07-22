@@ -16,6 +16,7 @@
 #include "combination.hpp"
 
 #include <stdio.h>
+#include <mutex>
 
 using namespace std;
 using namespace utility;
@@ -35,17 +36,19 @@ class App {
     int numPos; // number of positions being processed
     
     VCFDocument output;
+    mutex outputMutex;
     
     Combination combi; // computes nCr
     Phred phred; // computes phred probabilities
     
-    vector<Pileup>& positions;
+    vector<string>& pileup;
+//    vector<Pileup>& positions;
     
 public:
-    App(Config& config, vector<string>& bamIDs, vector<Pileup>& pileupRows);
+    App(Config& config, vector<string>& bamIDs, vector<string>& pileupRows);
     
-    void runAlgo();
-    // Runs main algorithm
+    void processRow(int rowN); // processes row of data
+    void runAlgo(); // Runs main algorithm
 };
 
 #endif /* app_hpp */

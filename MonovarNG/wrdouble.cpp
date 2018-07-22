@@ -242,3 +242,8 @@ wrdouble& wrdouble::operator+=(double n) {
     // addition and assignment with double
     return (*this) += wrdouble(n);
 }
+
+double wrdouble::phred() {
+    // returns the phred value of the wrdouble
+    return -10.0*(log10(value) + 64.0*exponent*log10(2.0));
+}

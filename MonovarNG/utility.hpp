@@ -22,9 +22,13 @@ namespace utility {
     
     Config setupConfig(int argc, const char *argv[]); // Setup app configurations
     
-    vector<string> getBamIDs(string filename); // Gets bam IDs for all bam files named in file (at filename)
+    vector<string> getBamFilenames(string filename); // Gets bam filenames for all bam files named in file (at filename)
     
-    vector<Pileup> getPileup(int numCells, string filename); // Gets a list of pileup rows
+    vector<string> getBamIDs(string filename); // Gets bam IDs for all bam files named in file (at filename). RG IDs, not filename
+    
+    vector<string> readPileup(int numCells, string filename); // Reads from pileup file, saving it as a vector of strings
+    
+    Pileup getPileup(int numCells, string& row); // Parses a row of pileup and return a pileup object
     
     array<array<array<double, 4>, 4>, 4> genGenotypePriors(double p); // Generates genotype priors matrix given probability p. priors[a][b][c] = p(^ab)(_c)
     

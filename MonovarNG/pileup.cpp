@@ -11,6 +11,8 @@
 #include "single_cell_pos.hpp"
 #include "wrdouble.hpp"
 #include "phred.hpp"
+#include "ap.h"
+#include "statistics.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -41,7 +43,7 @@ Pileup::Pileup(int numCells, string& row) : numCells(numCells) {
     }
 }
 
-void Pileup::print(string filename) {
+void Pileup::print(string filename, bool quality) {
     // prints bases and qualities for debugging
     if (filename.size()) freopen(filename.c_str(), "a", stdout); // save to file
     //    printf("%d\n", seqPos);
@@ -52,13 +54,14 @@ void Pileup::print(string filename) {
         for (char c: cell.bases) printf("%d", c);
         printf("\n");
     }
-//    printf("Qualities:\n");
-//    for (auto &cell: cells) {
-//        for (double v: cell.qualities) printf("%lf\t", v);
-//        printf("\n");
-//    }
+    if (quality) {
+        printf("Qualities:\n");
+        for (auto &cell: cells) {
+            for (double v: cell.qualities) printf("%lf\t", v);
+            printf("\n");
+        }
+    }
 }
-
 
 void Pileup::setObjs(const Combination* combiPtr, const Phred* phredPtr) {
     // sets combi and phred
@@ -73,6 +76,16 @@ int Pileup::totalDepth() {
         count += cell.numReads;
     }
     return count;
+}
+
+vector<pair<int, int>> Pileup::cellDepths() {
+    // gets depth for each cell
+    vector<pair<int, int>> depths;
+    for (auto& cell: allCells) {
+        int refCount = cell.countAllele(refBase), altCount = cell.countAllele(altBase);
+        depths.push_back(make_pair(refCount, altCount));
+    }
+    return depths;
 }
 
 int Pileup::refDepth() {
@@ -115,15 +128,17 @@ void Pileup::filterCellsWithRead() {
 
 
 void Pileup::sanitizeBases() {
-    // Removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper. Also converts to numbers
+    // Removes ins/deletions, special symbols, and cleans up all bases. Also changes refbase to upper. Also converts to numbers. Returns the number of forward and backward strands for each base.
     refBase = toupper(refBase);
     if (refBase == 'A') refBase = 0;
     else if (refBase == 'C') refBase = 1;
     else if (refBase == 'T') refBase = 2;
     else if (refBase == 'G') refBase = 3;
     
+    for (int i = 0; i < 4; i++) for (int j = 0; j < 2; j++) strandCount[i][j] = 0;
     for (SingleCellPos &cell: cells) {
-        cell.sanitizeBases(refBase);
+        auto strands = cell.sanitizeBases(refBase);
+        for (int i = 0; i < 4; i++) for (int j = 0; j < 2; j++) strandCount[i][j] += strands[i][j];
         cell.truncateReads();
     }
 }
@@ -239,12 +254,22 @@ wrdouble Pileup::computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& 
     
     // Generate likelihoods L(g=0, 1, 2) for each cell
     likelihoodsGlob = computeLikelihoods(genotypePriors, pDropout);
-
+//    printf("Likelihoods:\n");
+//    for (int i = 0; i < numCells; i++) {
+//        for (int j = 0; j < 3; j++) cout << likelihoodsGlob[i][j] << "\t";
+//        printf("\n");
+//    }
     // Generate dp
     vector<wrdouble> dp = computeDP(likelihoodsGlob);
+//    printf("DP:\n");
+//    for (int i = 0; i < numCells*2+1; i++) cout << dp[i] << "\t";
+//    cout << endl;
     
     // Generate alternate count likelihoods
     vector<wrdouble> altLikelihoods = computeAltLikelihoods(dp);
+//    printf("Alt likelihoods:\n");
+//    for (int i = 0; i < numCells*2+1; i++) cout << altLikelihoods[i] << "\t";
+//    cout << endl;
     
     // Compute probability of mutation
     probBase = 0.0;
@@ -257,20 +282,24 @@ wrdouble Pileup::computeZeroVarProb(const array<array<array<double, 4>, 4>, 4>& 
 
 double Pileup::computeC(int l, int v) {
     // computes the C function
-//    return combi->getValue(l, v) * combi->getValue(2*numCells-l, 2-v) / combi->getValue(2*numCells, 2);
-    if (v == 0) {
-        return (2.0*numCells-l)*(2.0*numCells-l-1)/((2.0*numCells)*(2.0*numCells-1));
-    } else if (v == 1) {
-        return 2.0*l*(2*numCells-l)/((2.0*numCells)*(2.0*numCells-1));
-    } else {
-        return (1.0*l*(l-1))/((2.0*numCells)*(2.0*numCells-1));
-    }
+    return combi->getValue(l, v) * combi->getValue(2*numCells-l, 2-v) / combi->getValue(2*numCells, 2);
+//    if (v == 0) {
+//        return (2.0*numCells-l)*(2.0*numCells-l-1)/((2.0*numCells)*(2.0*numCells-1));
+//    } else if (v == 1) {
+//        return 2.0*l*(2*numCells-l)/((2.0*numCells)*(2.0*numCells-1));
+//    } else {
+//        return (1.0*l*(l-1))/((2.0*numCells)*(2.0*numCells-1));
+//    }
 }
 
 vector<int> Pileup::computeGenotype() {
     // computes the genotype of each cell, 0, 1 or 2
     vector<double> altCountPriors = genAltCountPriors(numCells);
+//    printf("Alt count priors:\n");
+//    for (int i = 0; i <= numCells*2; i++) printf("%lf\t", altCountPriors[i]);
+//    printf("\n");
     
+//    cout << "ProbBase = " << probBase << endl;
     vector<int> genotypes; genotypes.reserve(numCells);
     for (int i = 0; i < numCells; i++) {
         // Build new likelihoods, by removing this cell
@@ -281,6 +310,11 @@ vector<int> Pileup::computeGenotype() {
         }
         vector<wrdouble> dp;
         if (numCells != 1) dp = computeDP(newLikelihoods);
+        
+//        printf("\nCell %d\n", i);
+//        printf("DP:\n");
+//        for (wrdouble j: dp) cout << j << "\t";
+//        cout << endl;
         
         wrdouble probs[3]; // probability of each genotype
         for (int j = 0; j < 3; j++) {
@@ -298,10 +332,10 @@ vector<int> Pileup::computeGenotype() {
             probs[j] *= likelihoodsGlob[i][j];
 //            cout << "after multiply" << probs[j] << "\t";
             probs[j] /= probBase;
-            cout << probs[j] << "\t";
+//            cout << probs[j] << "\t";
 //            cout << "finalprob: " << probs[j] << "\n";
         }
-        cout << endl;
+//        cout << endl;
         
         int bestGenotype = -1;
         wrdouble highestProb = 0;
@@ -313,20 +347,81 @@ vector<int> Pileup::computeGenotype() {
         }
         genotypes.push_back(bestGenotype);
     }
-    return genotypes;
+    
+    // Add '-1' for cells with no reads
+    vector<int> allGenotypes;
+    int pos = 0; // position in genotypes
+    for (auto& cell: allCells) {
+        if (cell.hasReads()) {
+            allGenotypes.push_back(genotypes[pos]);
+            pos++;
+        } else allGenotypes.push_back(-1);
+    }
+    
+    if (pos != genotypes.size()) exit(1); // error!
+    
+    return allGenotypes;
 }
 
 
+double Pileup::computeWilcoxon() {
+    // computes the Mann-Whitney-Wilcoxon test
+    vector<double> ref, alt;
+    for (auto& cell: cells) {
+        for (int i = 0; i < cell.numReads; i++) {
+            if (cell.bases[i] == refBase) ref.push_back(cell.qualities[i]);
+            else if (cell.bases[i] == altBase) alt.push_back(cell.qualities[i]);
+        }
+    }
+    if (ref.size() < 5 || alt.size() < 5) return 0.0;
+    alglib::real_1d_array refA, altA;
+    refA.setcontent(ref.size(), ref.data());
+    altA.setcontent(alt.size(), alt.data());
+    double bothtails, lefttail, righttail;
+    alglib::mannwhitneyutest(altA, alt.size(), refA, ref.size(), bothtails, lefttail, righttail);
+    return bothtails;
+}
 
+double Pileup::qualityByDepth(const double& quality, const vector<int>& genotype) {
+    // computes QualByDepth, quality divided by the number of reads in cells with mutation
+    int depth = 0;
+    for (int i = 0; i < allCells.size(); i++) {
+        if (genotype[i] == 1 || genotype[i] == 2) {
+            depth += allCells[i].numReads;
+        }
+    }
+    if (depth == 0) return quality;
+    else return quality/depth;
+}
 
+double Pileup::computeStrandBias() {
+    // computes strand bias
+    for (int i = 0; i < 4; i++) for (int j = 0; j < 2; j++) strandCount[i][j]++;
+    
+    double r = double(strandCount[0][0]*strandCount[1][1])/(strandCount[0][1]*strandCount[1][0]);
+    double refRatio = double(min(strandCount[0][0], strandCount[0][1]))/max(strandCount[0][0], strandCount[0][1]);
+    double altRatio = double(min(strandCount[1][0], strandCount[1][1]))/max(strandCount[1][0], strandCount[1][1]);
+    
+    return log(refRatio/altRatio*(r+1.0/r));
+}
 
-
-
-
-
-
-
-
+double Pileup::psarr(vector<pair<int, int>>& depths) {
+    // computes PSARR, ratio of per-sample alt allele to ref allele
+    int refCount = 0, altCount = 0, refReads = 0, altReads = 0;
+    for (auto& counts: depths) {
+        if (counts.first + counts.second == 0) continue;
+        if (counts.first) refReads++;
+        if (counts.second) altReads++;
+        refCount += counts.first;
+        altCount += counts.second;
+    }
+    if (altReads == 0) altReads = 1.0;
+    if (refReads == 0) refReads = 1.0;
+    double num = double(altCount)/altReads;
+    double den = double(refCount)/refReads;
+    if (den == 0) den = 1.0;
+    return num/den;
+}
 
 
 

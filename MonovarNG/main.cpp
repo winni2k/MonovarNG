@@ -28,7 +28,7 @@ int main(int argc, const char * argv[]) {
     
     int numCells = bamIDs.size();
     
-    vector<Pileup> pileup = getPileup(numCells, config.pileupFilename);
+    vector<string> pileup = readPileup(numCells, config.pileupFilename);
     
     App app(config, bamIDs, pileup);
     

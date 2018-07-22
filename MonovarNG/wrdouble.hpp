@@ -54,6 +54,8 @@ struct wrdouble {
     wrdouble& operator*=(double n); // multiplication and assignment with double
     wrdouble& operator/=(double n); // division and assignment with double
     wrdouble& operator+=(double n); // addition and assignment with double
+    
+    double phred(); // returns the phred value of the wrdouble
 };
 
 #endif /* wrdouble_hpp */
