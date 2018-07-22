@@ -25,8 +25,12 @@ include_directories("${PROJECT_SOURCE_DIR}/MonovarNG")
 include_directories("${PROJECT_SOURCE_DIR}/MonovarNG/alglib")
 
 # Finding htslib
-find_library(HTSLIB hts "/usr/local/lib")
-# find_library(HTSLIB hts "/usr/local/lib")
+find_library(HTSLIB hts)
+
+# Finding boost
+find_package(Boost)
+include_directories(${Boost_INCLUDE_DIR})
+
 
 # Add executables
 file( GLOB LIB_SOURCES ${PROJECT_SOURCE_DIR}/MonovarNG/*.cpp )
@@ -35,4 +39,4 @@ file( GLOB ALGLIB_SOURCES ${PROJECT_SOURCE_DIR}/MonovarNG/alglib/*.cpp )
 # message(STATUS ${ALGLIB_SOURCES})
 add_executable(monovar ${ALGLIB_SOURCES} ${LIB_SOURCES})
 
-target_link_libraries(monovar ${HTSLIB})
+target_link_libraries(monovar ${HTSLIB} ${Boost_LIBRARIES})
