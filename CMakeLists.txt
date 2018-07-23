@@ -10,6 +10,7 @@ set(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
+SET(CMAKE_CXX_FLAGS " -pthread") 
 
 
 # Set the output folder
@@ -28,8 +29,11 @@ include_directories("${PROJECT_SOURCE_DIR}/MonovarNG/alglib")
 find_library(HTSLIB hts)
 
 # Finding boost
-find_package(Boost)
-include_directories(${Boost_INCLUDE_DIR})
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIR})
+    message(STATUS ${Boost_LIBRARIES})
+endif()
 
 
 # Add executables
