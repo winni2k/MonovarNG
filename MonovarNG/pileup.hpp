@@ -25,7 +25,7 @@ using namespace std;
 
 struct Pileup {
     // Stores data in a row in pileup format
-    int numCells;
+    int numCells = 0;
     string seqID; // sequence identifier
     int seqPos; // position in sequence (starting from 1)
     char refBase; // reference base at position

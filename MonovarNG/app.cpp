@@ -39,9 +39,11 @@ App::App(Config& config, vector<string>& bamIDs, vector<string>& pileupRows) : m
 
 void App::processRow(int rowN) {
     // processes row of data
+//    cout << "row " << rowN << endl;
     Pileup position = getPileup(numCells, pileup[rowN]);
     position.setObjs(&combi, &phred);
-        
+//    cout << "set objects" << endl;
+    
     int totalDepth = position.totalDepth(), refDepth = position.refDepth(); // total no. of reads / no. matching reference base
     
     int altCount = totalDepth - refDepth; // no. of alternate reads
@@ -61,7 +63,7 @@ void App::processRow(int rowN) {
         if ((rowN+1) % 50000 == 0) printf("Processed row %d\n", rowN+1);
         return;
     }
-    
+//    cout << "after filtering" << endl;
     // Parse and filter reads
     position.sanitizeBases();
     position.filterCellsWithRead();

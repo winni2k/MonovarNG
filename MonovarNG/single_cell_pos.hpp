@@ -20,9 +20,9 @@ using namespace std;
 
 
 struct SingleCellPos {
-    int numReads; // number of reads at position, for cell
-    string bases; // bases at position, for cell
-    string qualityString; // quality string for qualities at position, for cell
+    int numReads = 0; // number of reads at position, for cell
+    string bases = ""; // bases at position, for cell
+    string qualityString = ""; // quality string for qualities at position, for cell
     vector<double> qualities; // qualities for each read at position, for cell
     
     SingleCellPos(int numReads, string& bases, string& qualityString);

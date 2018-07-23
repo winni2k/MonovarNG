@@ -19,7 +19,12 @@
 
 using namespace std;
 
-SingleCellPos::SingleCellPos(int numReads, string& bases, string& qualityString) : numReads(numReads), bases(bases), qualityString(qualityString) {} // initializer sets default values
+SingleCellPos::SingleCellPos(int numReads, string& bases, string& qualityString) {
+    // initializer sets default values
+    numReads = numReads;
+    bases = bases;
+    qualityString = qualityString;
+}
 
 int SingleCellPos::refCount() {
     // Returns number of forward + backward matching reads matching reference base

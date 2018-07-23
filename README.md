@@ -40,7 +40,7 @@ The program requires multiple bam files. The bam files should be sorted by coord
 
 
 ```
-samtools mpileup -B -d10000 -f ref.fa -q 40 -b filenames.txt | monovar ref.fa filenames.txt compiled.pl output.vcf [-patm]
+monovar ref.fa filenames.txt compiled.pl output.vcf [-patm]
 ```
 The arguments of Monovar are as follows:
 
