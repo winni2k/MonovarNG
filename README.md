@@ -24,7 +24,6 @@ sudo make install
 ```
 Build Monovar
 ```
-cd
 git clone https://github.com/tianyi5309/MonovarNG
 cd MonovarNG
 cmake .
