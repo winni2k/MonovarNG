@@ -1,7 +1,7 @@
 ## MonovarNG - Monovar but better
 ## Overview ##
 **MonovarNG** is a single nucleotide variant (SNV) detection and genotyping algorithm for single-cell DNA sequencing data. It takes a list of bam files as input and outputs a vcf file containing the detected SNVs.
-This improved version of Monovar is written in C++ and achieves 100x speedup over the original Monovar. The accuracy is also improved 
+This improved version of Monovar is written in C++ and achieves 3600x speedup over the original Monovar. The accuracy is also improved 
 
 ## Dependencies ##
 * [Boost C++](http://boost.org)
