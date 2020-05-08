@@ -4,6 +4,7 @@
 //
 //  Created by tianyi on 6/19/18.
 //  Copyright © 2018 tianyi. All rights reserved.
+//  Copyright © 2020 Warren W. Kretzschmar. All rights reserved.
 //
 
 #include "utility.hpp"
@@ -98,6 +99,13 @@ vector<string> utility::getBamIDs(string filename) {
 
     // Open each bam file and get its readgroup ID
     for (string file: bamNames) {
+        ifstream f(file.c_str());
+        if (!f.good()); {
+            ids.push_back(file);
+	    f.close();
+	    continue;
+	}
+	f.close();
         samFile * samfile = sam_open(file.c_str(), "r");
         bam_hdr_t * header = sam_hdr_read(samfile);
         string headerText = (*header).text;
